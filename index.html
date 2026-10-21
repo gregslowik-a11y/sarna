@@ -106,7 +106,6 @@
     .hidden { display: none !important; }
   </style>
 
-  <!-- Biblioteki AR -->
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 </head>
@@ -140,15 +139,15 @@
       wasd-controls="enabled: false">
     </a-camera>
 
-    <!-- Obiekt pojawia się po rozpoznaniu wydrukowanej planszy -->
+    <!-- Mniejsza sarna, aby nie zasłaniała całej planszy -->
     <a-entity mindar-image-target="targetIndex: 0">
 
       <a-gltf-model
         id="deer"
         src="#deerModel"
-        position="0 0 0.05"
+        position="0 -0.15 0.05"
         rotation="0 180 0"
-        scale="7.5 7.5 7.5">
+        scale="0.8 0.8 0.8">
       </a-gltf-model>
 
     </a-entity>

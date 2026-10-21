@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Leśna AR — poznaj jelenia</title>
+  <meta name="theme-color" content="#18251b">
+  <style>
+    html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#101810;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#fff}
+    #scene{position:fixed;inset:0}
+    .overlay{position:fixed;z-index:10;left:12px;right:12px;top:12px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;pointer-events:none}
+    .panel{pointer-events:auto;background:#102016df;border:1px solid #ffffff35;border-radius:16px;padding:12px 14px;max-width:min(80vw,340px);backdrop-filter:blur(8px)}
+    .title{font-weight:800;font-size:1.05rem;letter-spacing:.03em}
+    .sub{font-size:.83rem;line-height:1.35;color:#d9e6d7;margin-top:4px}
+    .pill{pointer-events:auto;border:1px solid #ffffff60;background:#102016e8;color:#fff;border-radius:999px;padding:10px 13px;font-weight:700}
+    #start{position:fixed;z-index:20;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;background:linear-gradient(#0b150cb8,#0b150ce8)}
+    .start-card{width:min(100%,440px);border:1px solid #ffffff38;background:#18271c;border-radius:24px;padding:24px;box-shadow:0 18px 60px #0008}
+    .start-card h1{font-size:1.7rem;line-height:1.1;margin:0 0 10px}
+    .start-card p{color:#d6e0d4;line-height:1.5}
+    .start-card button{background:#d6e5aa;color:#152116;border:0;border-radius:999px;padding:14px 18px;font-size:1rem;font-weight:800;width:100%;margin-top:8px}
+    #status{font-size:.82rem;color:#d6e0d4;margin-top:10px}
+    .bottom-note{position:fixed;z-index:10;bottom:12px;left:12px;right:12px;text-align:center;font-size:.78rem;color:#fff;background:#102016bd;border-radius:12px;padding:9px 12px;pointer-events:none}
+    a{color:#e2efb7}
+  </style>
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+</head>
+<body>
+  <div class="overlay">
+    <div class="panel">
+      <div class="title">LEŚNA AR</div>
+      <div class="sub">Skieruj aparat na wydrukowane tło lasu i jeziora.</div>
+    </div>
+    <button class="pill" id="help">Jak używać?</button>
+  </div>
+
+  <div id="scene">
+    <a-scene mindar-image="imageTargetSrc: ./tlo_las_jezioro.mind; autoStart: false; uiScanning: true; uiLoading: yes;"
+      color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights"
+      vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+      <a-assets>
+        <a-asset-item id="deerModel" src="./male_deer_animal_3d_model_free.glb"></a-asset-item>
+      </a-assets>
+      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+      <a-entity mindar-image-target="targetIndex: 0">
+        <!-- Pozycja i skala modelu można później dopasować do konkretnego GLB. -->
+        <a-gltf-model src="#deerModel" position="0 -0.45 0.15" rotation="0 0 0" scale="0.35 0.35 0.35"
+          animation-mixer></a-gltf-model>
+        <a-ring position="0 -0.72 0.18" rotation="-90 0 0" radius-inner="0.25" radius-outer="0.28"
+          color="#d9eb9b" opacity="0.85"></a-ring>
+      </a-entity>
+    </a-scene>
+  </div>
+
+  <div id="start">
+    <div class="start-card">
+      <h1>Ożyw leśną scenerię</h1>
+      <p>Po zeskanowaniu tła lasu i jeziora pojawi się model 3D zwierzęcia. Zezwól na dostęp do aparatu i skieruj telefon na wydrukowaną grafikę.</p>
+      <p><strong>Ważne:</strong> przed uruchomieniem trzeba dodać plik <code>tlo_las_jezioro.mind</code> — to przygotowany z grafiki marker dla systemu rozpoznawania obrazu.</p>
+      <button id="begin">Uruchom aparat</button>
+      <div id="status">Wymagane połączenie HTTPS i zgoda na kamerę.</div>
+    </div>
+  </div>
+  <div class="bottom-note">Poruszaj telefonem powoli i trzymaj całą planszę w kadrze.</div>
+
+  <script>
+    const start = document.getElementById('start');
+    const statusEl = document.getElementById('status');
+    const scene = document.querySelector('a-scene');
+    document.getElementById('begin').addEventListener('click', async () => {
+      try {
+        if (!window.isSecureContext) {
+          statusEl.textContent = 'Strona musi być otwarta przez HTTPS (np. GitHub Pages).';
+          return;
+        }
+        if (scene.systems['mindar-image-system']) {
+          await scene.systems['mindar-image-system'].start();
+          start.style.display = 'none';
+        } else {
+          statusEl.textContent = 'System AR się ładuje. Odśwież stronę i spróbuj ponownie.';
+        }
+      } catch (e) {
+        statusEl.textContent = 'Nie udało się uruchomić AR. Sprawdź zgodę na aparat i czy plik .mind jest w repozytorium.';
+      }
+    });
+    document.getElementById('help').addEventListener('click', () => {
+      alert('1. Wydrukuj grafikę tlo_las_jezioro.png. 2. Otwórz tę stronę na telefonie. 3. Zezwól na aparat. 4. Skieruj kamerę na wydruk. Model 3D pojawi się po rozpoznaniu grafiki.');
+    });
+  </script>
+</body>
+</html>

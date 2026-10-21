@@ -15,48 +15,41 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background: #17251a;
-      color: #fff;
+      background: transparent !important;
+      color: white;
       font-family: Arial, sans-serif;
     }
 
     a-scene {
-      position: fixed;
+      position: fixed !important;
       inset: 0;
       width: 100%;
       height: 100%;
+      background: transparent !important;
+      z-index: 1;
     }
 
-    .topbar {
+    a-scene canvas {
+      background: transparent !important;
+    }
+
+    .topbar, .status {
       position: fixed;
       z-index: 5;
-      top: 12px;
       left: 12px;
       right: 12px;
       padding: 12px 15px;
       border-radius: 14px;
-      background: rgba(15, 32, 21, .92);
+      background: rgba(15, 32, 21, .82);
       border: 1px solid #ffffff40;
+      text-align: center;
       pointer-events: none;
     }
 
+    .topbar { top: 12px; }
     .topbar strong { letter-spacing: 2px; }
     .topbar span { display: block; font-size: 12px; margin-top: 4px; }
-
-    .status {
-      position: fixed;
-      z-index: 5;
-      bottom: 12px;
-      left: 12px;
-      right: 12px;
-      padding: 12px;
-      text-align: center;
-      font-size: 14px;
-      line-height: 1.4;
-      border-radius: 14px;
-      background: rgba(15, 32, 21, .92);
-      border: 1px solid #ffffff40;
-    }
+    .status { bottom: 12px; font-size: 14px; line-height: 1.4; }
 
     .overlay {
       position: fixed;
@@ -66,7 +59,7 @@
       align-items: center;
       justify-content: center;
       padding: 20px;
-      background: rgba(9, 20, 12, .96);
+      background: #102016;
     }
 
     .panel {
@@ -78,15 +71,14 @@
       background: #19291d;
     }
 
-    .panel h1 { font-size: 30px; margin: 10px 0; }
+    .panel h1 { font-size: 29px; margin: 10px 0; }
     .panel p { line-height: 1.5; color: #e0e7dc; }
 
     button {
-      display: block;
       width: 100%;
       border: 0;
       border-radius: 24px;
-      padding: 14px 18px;
+      padding: 15px;
       margin-top: 12px;
       background: #d7e8a6;
       color: #17251a;
@@ -96,13 +88,7 @@
     }
 
     button:disabled { opacity: .65; }
-
-    #message {
-      font-size: 13px;
-      overflow-wrap: anywhere;
-      min-height: 18px;
-    }
-
+    #message { font-size: 13px; overflow-wrap: anywhere; }
     .hidden { display: none !important; }
   </style>
 
@@ -111,7 +97,6 @@
 </head>
 
 <body>
-
   <div class="topbar">
     <strong>LEŚNA AR</strong>
     <span>Skieruj aparat na wydruk lasu i jeziora</span>
@@ -120,8 +105,8 @@
   <a-scene
     id="arScene"
     mindar-image="imageTargetSrc: ./tlo_las_jezioro.mind; autoStart: false; uiScanning: true"
-    color-space="sRGB"
-    renderer="alpha: true; colorManagement: true"
+    renderer="alpha: true; colorManagement: true; physicallyCorrectLights: true"
+    background="transparent: true; color: #000000"
     vr-mode-ui="enabled: false"
     device-orientation-permission-ui="enabled: false"
     loading-screen="enabled: false">
@@ -139,17 +124,14 @@
       wasd-controls="enabled: false">
     </a-camera>
 
-    <!-- Mniejsza sarna, aby nie zasłaniała całej planszy -->
     <a-entity mindar-image-target="targetIndex: 0">
-
       <a-gltf-model
         id="deer"
         src="#deerModel"
-        position="0 -0.15 0.05"
-        rotation="0 180 0"
-        scale="0.8 0.8 0.8">
+        position="0 0 0.05"
+        rotation="0 135 0"
+        scale="1.2 1.2 1.2">
       </a-gltf-model>
-
     </a-entity>
   </a-scene>
 
@@ -160,62 +142,37 @@
   <div id="startScreen" class="overlay">
     <div class="panel">
       <h1>Ożyw leśną scenerię</h1>
-
       <p>
-        Uruchom aparat i skieruj go na wydrukowany obraz
-        lasu i jeziora. Po rozpoznaniu grafiki pojawi się sarna 3D.
+        Naciśnij przycisk i zezwól na dostęp do aparatu.
+        Następnie skieruj telefon na wydrukowany obraz lasu i jeziora.
       </p>
-
-      <button id="startButton" type="button">
-        Uruchom aparat
-      </button>
-
-      <p id="message">
-        Wymagany internet i dostęp do aparatu.
-      </p>
+      <button id="startButton" type="button">Uruchom aparat</button>
+      <p id="message">Wymagane połączenie z internetem.</p>
     </div>
   </div>
 
   <script>
     (() => {
       const scene = document.getElementById("arScene");
-      const startScreen = document.getElementById("startScreen");
-      const startButton = document.getElementById("startButton");
+      const screen = document.getElementById("startScreen");
+      const button = document.getElementById("startButton");
       const status = document.getElementById("status");
       const message = document.getElementById("message");
-
       let starting = false;
 
-      function showError(text) {
-        message.textContent = text;
-        startButton.disabled = false;
-        startButton.textContent = "Spróbuj ponownie";
+      function showError(error) {
+        message.textContent =
+          error && error.message
+            ? error.message
+            : "Nie udało się uruchomić AR.";
+        button.disabled = false;
+        button.textContent = "Spróbuj ponownie";
         starting = false;
-      }
-
-      function waitForScene() {
-        return new Promise((resolve, reject) => {
-          if (scene.hasLoaded) {
-            resolve();
-            return;
-          }
-
-          const timer = setTimeout(() => {
-            reject(new Error(
-              "Scena AR nie załadowała się. Odśwież stronę."
-            ));
-          }, 20000);
-
-          scene.addEventListener("loaded", () => {
-            clearTimeout(timer);
-            resolve();
-          }, { once: true });
-        });
       }
 
       scene.addEventListener("targetFound", () => {
         status.textContent =
-          "Rozpoznano planszę! Sarna powinna być widoczna.";
+          "Plansza rozpoznana — sarna powinna być widoczna.";
       });
 
       scene.addEventListener("targetLost", () => {
@@ -223,61 +180,61 @@
           "Skieruj aparat ponownie na cały wydruk.";
       });
 
-      startButton.addEventListener("click", async () => {
+      button.addEventListener("click", async () => {
         if (starting) return;
 
         starting = true;
-        startButton.disabled = true;
-        startButton.textContent = "Uruchamiam aparat...";
+        button.disabled = true;
+        button.textContent = "Uruchamiam aparat...";
         message.textContent = "Sprawdzam system AR...";
 
         try {
           if (!window.isSecureContext) {
-            throw new Error(
-              "Otwórz stronę przez HTTPS, np. GitHub Pages."
-            );
+            throw new Error("Otwórz stronę przez HTTPS.");
           }
 
           if (!window.AFRAME) {
             throw new Error(
-              "Nie załadował się A-Frame. Sprawdź internet i odśwież stronę."
+              "Nie załadowała się biblioteka A-Frame. Sprawdź internet."
             );
           }
 
-          await waitForScene();
+          if (!scene.hasLoaded) {
+            await new Promise((resolve, reject) => {
+              const timer = setTimeout(() => {
+                reject(new Error(
+                  "Scena AR nie załadowała się. Odśwież stronę."
+                ));
+              }, 20000);
 
-          const arSystem =
-            scene.systems["mindar-image-system"];
+              scene.addEventListener("loaded", () => {
+                clearTimeout(timer);
+                resolve();
+              }, { once: true });
+            });
+          }
 
-          if (!arSystem || typeof arSystem.start !== "function") {
+          const system = scene.systems["mindar-image-system"];
+
+          if (!system || typeof system.start !== "function") {
             throw new Error(
-              "Nie załadował się system AR. Sprawdź połączenie z internetem."
+              "System AR nie został załadowany. Sprawdź internet."
             );
           }
 
-          message.textContent = "Proszę czekać, uruchamiam aparat...";
+          message.textContent = "Uruchamiam aparat...";
+          await system.start();
 
-          await arSystem.start();
-
-          startScreen.classList.add("hidden");
+          screen.classList.add("hidden");
           status.textContent =
-            "Aparat działa. Skieruj go na wydruk lasu i jeziora.";
+            "Aparat działa. Szukam wydrukowanej planszy...";
 
         } catch (error) {
           console.error("Błąd Leśna AR:", error);
-          showError(
-            error && error.message
-              ? error.message
-              : "Nie udało się uruchomić aparatu."
-          );
+          showError(error);
         }
-      });
-
-      window.addEventListener("error", event => {
-        console.error("Błąd strony:", event.message);
       });
     })();
   </script>
-
 </body>
 </html>

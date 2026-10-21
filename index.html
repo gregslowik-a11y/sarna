@@ -8,9 +8,7 @@
   <title>Leśna AR — sarna 3D</title>
 
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     html, body {
       margin: 0;
@@ -51,14 +49,8 @@
       pointer-events: none;
     }
 
-    .topbar {
-      top: 12px;
-    }
-
-    .topbar strong {
-      letter-spacing: 2px;
-    }
-
+    .topbar { top: 12px; }
+    .topbar strong { letter-spacing: 2px; }
     .topbar span {
       display: block;
       font-size: 12px;
@@ -109,10 +101,7 @@
       background: #19291d;
     }
 
-    .panel h1 {
-      font-size: 29px;
-      margin: 10px 0;
-    }
+    .panel h1 { font-size: 29px; margin: 10px 0; }
 
     .panel p {
       line-height: 1.5;
@@ -132,18 +121,14 @@
       cursor: pointer;
     }
 
-    button:disabled {
-      opacity: 0.65;
-    }
+    button:disabled { opacity: 0.65; }
 
     #message {
       font-size: 13px;
       overflow-wrap: anywhere;
     }
 
-    .hidden {
-      display: none !important;
-    }
+    .hidden { display: none !important; }
   </style>
 
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
@@ -198,7 +183,7 @@
   </div>
 
   <div id="rotateHint" class="hidden">
-    👆 Dotknij sarny i przesuń palcem w lewo lub w prawo
+    👆 Dotknij sarny i przesuwaj palcem w dowolnym kierunku
   </div>
 
   <div id="startScreen" class="overlay">
@@ -206,8 +191,9 @@
       <h1>Ożyw leśną scenerię</h1>
       <p>
         Uruchom aparat i skieruj telefon na wydrukowany obraz
-        lasu i jeziora. Gdy pojawi się sarna, dotknij jej
-        i przesuwaj palcem w poziomie, aby obejrzeć ją dookoła.
+        lasu i jeziora. Dotknij sarny i przesuwaj palcem:
+        w lewo lub prawo, aby ją obracać, oraz w górę lub dół,
+        aby ją pochylać.
       </p>
       <button id="startButton" type="button">Uruchom aparat</button>
       <p id="message">Wymagane połączenie z internetem.</p>
@@ -228,11 +214,17 @@
       let starting = false;
       let dragging = false;
       let lastX = 0;
+      let lastY = 0;
       let rotationY = 135;
+      let rotationX = 0;
       let targetVisible = false;
 
       function setRotation() {
-        deer.setAttribute("rotation", `0 ${rotationY} 0`);
+        deer.setAttribute("rotation", {
+          x: rotationX,
+          y: rotationY,
+          z: 0
+        });
       }
 
       function showError(error) {
@@ -249,7 +241,7 @@
 
       target.addEventListener("targetFound", () => {
         targetVisible = true;
-        status.textContent = "Sarna jest widoczna — dotknij jej, aby ją obracać.";
+        status.textContent = "Plansza rozpoznana — dotknij sarny, aby ją obracać.";
         rotateHint.classList.remove("hidden");
       });
 
@@ -263,20 +255,19 @@
       function pointerDown(event) {
         if (!targetVisible) return;
         if (event.pointerType === "mouse" && event.button !== 0) return;
+        if (!scene.canvas || !scene.camera) return;
 
         const rect = scene.canvas.getBoundingClientRect();
         const x = event.clientX - rect.left;
         const y = event.clientY - rect.top;
 
-        const ndcX = (x / rect.width) * 2 - 1;
-        const ndcY = -(y / rect.height) * 2 + 1;
-
-        const cameraEl = scene.camera;
-        if (!cameraEl) return;
+        const mouse = new THREE.Vector2(
+          (x / rect.width) * 2 - 1,
+          -(y / rect.height) * 2 + 1
+        );
 
         const raycaster = new THREE.Raycaster();
-        const mouse = new THREE.Vector2(ndcX, ndcY);
-        raycaster.setFromCamera(mouse, cameraEl);
+        raycaster.setFromCamera(mouse, scene.camera);
 
         const modelObject = deer.getObject3D("mesh");
         if (!modelObject) return;
@@ -286,6 +277,7 @@
 
         dragging = true;
         lastX = event.clientX;
+        lastY = event.clientY;
 
         if (scene.canvas.setPointerCapture) {
           try {
@@ -300,9 +292,18 @@
         if (!dragging) return;
 
         const deltaX = event.clientX - lastX;
+        const deltaY = event.clientY - lastY;
+
         lastX = event.clientX;
+        lastY = event.clientY;
 
         rotationY = (rotationY + deltaX * 0.8) % 360;
+
+        rotationX = Math.max(
+          -60,
+          Math.min(60, rotationX - deltaY * 0.6)
+        );
+
         setRotation();
         event.preventDefault();
       }
@@ -312,14 +313,14 @@
       }
 
       scene.addEventListener("renderstart", () => {
-        if (scene.canvas) {
-          scene.canvas.style.touchAction = "none";
-          scene.canvas.addEventListener("pointerdown", pointerDown);
-          scene.canvas.addEventListener("pointermove", pointerMove);
-          scene.canvas.addEventListener("pointerup", pointerUp);
-          scene.canvas.addEventListener("pointercancel", pointerUp);
-          scene.canvas.addEventListener("lostpointercapture", pointerUp);
-        }
+        if (!scene.canvas) return;
+
+        scene.canvas.style.touchAction = "none";
+        scene.canvas.addEventListener("pointerdown", pointerDown);
+        scene.canvas.addEventListener("pointermove", pointerMove);
+        scene.canvas.addEventListener("pointerup", pointerUp);
+        scene.canvas.addEventListener("pointercancel", pointerUp);
+        scene.canvas.addEventListener("lostpointercapture", pointerUp);
       });
 
       button.addEventListener("click", async () => {
@@ -366,7 +367,7 @@
             }, { once: true });
 
             setTimeout(() => {
-              reject(new Error("Ładowanie modelu trwa zbyt długo. Sprawdź nazwę pliku GLB."));
+              reject(new Error("Ładowanie modelu trwa zbyt długo. Sprawdź plik GLB."));
             }, 30000);
           });
 
@@ -376,7 +377,7 @@
             throw new Error("System AR nie został załadowany. Sprawdź połączenie z internetem.");
           }
 
-          message.textContent = "Proszę zezwolić na dostęp do aparatu...";
+          message.textContent = "Uruchamiam aparat...";
           await system.start();
 
           screen.classList.add("hidden");

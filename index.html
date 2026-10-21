@@ -1,207 +1,277 @@
 
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#17251a">
-  <title>Leśna AR — ożyw leśną scenerię</title>
-  <meta name="description" content="Interaktywna prezentacja AR z modelem 3D zwierzęcia na tle lasu i jeziora.">
+  <title>Leśna AR — sarna 3D</title>
+
   <style>
-    :root { color-scheme: dark; --forest:#17251a; --leaf:#d7e8a6; --text:#f7f8f2; --muted:#d8e1d3; }
     * { box-sizing: border-box; }
-    html, body { margin:0; width:100%; min-height:100%; background:var(--forest); color:var(--text); font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
-    body { overflow:hidden; }
-    a-scene { position:fixed!important; inset:0; width:100%; height:100%; background:transparent!important; z-index:1; }
-    a-scene canvas { background:transparent!important; }
-    .topbar { position:fixed; z-index:5; top:max(12px,env(safe-area-inset-top)); left:12px; right:12px; display:flex; align-items:flex-start; justify-content:space-between; gap:10px; pointer-events:none; }
-    .brand { background:#102016e8; border:1px solid #ffffff35; border-radius:15px; padding:11px 14px; max-width:75%; backdrop-filter:blur(8px); }
-    .brand strong { display:block; letter-spacing:.08em; font-size:.92rem; }
-    .brand span { display:block; color:var(--muted); font-size:.78rem; line-height:1.3; margin-top:3px; }
-    button { font:inherit; cursor:pointer; }
-    .small-btn { pointer-events:auto; border:1px solid #ffffff70; background:#102016ed; color:white; border-radius:999px; padding:10px 13px; font-weight:700; }
-    .bottom { position:fixed; z-index:5; left:12px; right:12px; bottom:max(12px,env(safe-area-inset-bottom)); text-align:center; }
-    .status { display:inline-block; max-width:100%; background:#102016e8; border:1px solid #ffffff30; border-radius:12px; padding:9px 12px; font-size:.82rem; line-height:1.4; color:#f6f8ef; }
-    .start { position:fixed; z-index:20; inset:0; display:flex; align-items:center; justify-content:center; padding:20px; background:linear-gradient(180deg,#0d170bd9,#0d170bf2); }
-    .start-card { width:min(100%,460px); background:#19291d; border:1px solid #ffffff38; border-radius:24px; padding:24px; box-shadow:0 20px 70px #0008; }
-    .eyebrow { color:var(--leaf); font-weight:800; text-transform:uppercase; letter-spacing:.16em; font-size:.76rem; }
-    h1 { font-size:clamp(1.8rem,7vw,2.5rem); line-height:1.02; margin:10px 0 12px; }
-    .start-card p { color:var(--muted); line-height:1.5; font-size:.95rem; }
-    .primary { width:100%; border:0; border-radius:999px; padding:14px 18px; background:var(--leaf); color:#17251a; font-weight:850; margin-top:8px; }
-    .secondary { width:100%; border:1px solid #ffffff45; border-radius:999px; padding:12px 18px; background:transparent; color:white; font-weight:700; margin-top:9px; }
-    #startStatus { color:#e8efdf; font-size:.82rem; margin-top:12px; min-height:1.2em; }
-    .instructions { display:none; position:fixed; z-index:30; inset:0; padding:20px; align-items:center; justify-content:center; background:#071009d9; }
-    .instructions.open { display:flex; }
-    .instructions-card { max-width:420px; width:100%; padding:22px; border-radius:20px; background:#19291d; border:1px solid #ffffff35; }
-    .instructions-card li { color:var(--muted); line-height:1.5; margin:8px 0; }
-    code { color:var(--leaf); overflow-wrap:anywhere; }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #17251a;
+      color: #fff;
+      font-family: Arial, sans-serif;
+    }
+
+    a-scene {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .topbar, .status {
+      position: fixed;
+      z-index: 5;
+      background: rgba(15, 32, 21, .9);
+      border: 1px solid #ffffff40;
+      border-radius: 14px;
+      padding: 12px 15px;
+    }
+
+    .topbar {
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .topbar strong { letter-spacing: 2px; }
+    .topbar span { display: block; font-size: 12px; margin-top: 4px; }
+
+    button {
+      border: 0;
+      border-radius: 24px;
+      padding: 13px 18px;
+      background: #d7e8a6;
+      color: #17251a;
+      font-weight: bold;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    button:disabled { opacity: .6; }
+
+    .status {
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      text-align: center;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .overlay {
+      position: fixed;
+      z-index: 20;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(9, 20, 12, .94);
+    }
+
+    .panel {
+      width: 100%;
+      max-width: 440px;
+      padding: 24px;
+      border: 1px solid #ffffff40;
+      border-radius: 22px;
+      background: #19291d;
+    }
+
+    .panel h1 { font-size: 30px; margin: 10px 0; }
+    .panel p { line-height: 1.5; color: #e0e7dc; }
+    .panel button { width: 100%; margin-top: 10px; }
+    #message { font-size: 13px; overflow-wrap: anywhere; }
+    .hidden { display: none !important; }
   </style>
+
+  <!-- A-Frame -->
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+
+  <!-- MindAR: ścieżka do właściwego pliku biblioteki -->
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 </head>
+
 <body>
+
   <div class="topbar">
-    <div class="brand">
+    <div>
       <strong>LEŚNA AR</strong>
-      <span>Skieruj aparat na wydrukowane tło lasu i jeziora.</span>
+      <span>Skieruj aparat na wydruk lasu i jeziora</span>
     </div>
-    <button class="small-btn" id="helpBtn" type="button">Pomoc</button>
   </div>
 
   <a-scene
     id="arScene"
-    embedded
-    mindar-image="imageTargetSrc: ./tlo_las_jezioro.mind; autoStart: false; uiScanning: true; filterMinCF: 0.0001; filterBeta: 0.001"
+    mindar-image="
+      imageTargetSrc: ./tlo_las_jezioro.mind;
+      autoStart: false;
+      uiScanning: true;
+      filterMinCF: 0.0001;
+      filterBeta: 0.001
+    "
     color-space="sRGB"
-    renderer="alpha: true; colorManagement: true; physicallyCorrectLights"
-    background="color: transparent"
+    renderer="alpha: true; colorManagement: true"
     vr-mode-ui="enabled: false"
     device-orientation-permission-ui="enabled: false"
     loading-screen="enabled: false">
 
-    <a-assets timeout="20000">
-      <a-asset-item id="animalModel" src="./male_deer_animal_3d_model_free.glb"></a-asset-item>
+    <a-assets timeout="30000">
+      <a-asset-item
+        id="deerModel"
+        src="./male_deer_animal_3d_model_free.glb">
+      </a-asset-item>
     </a-assets>
 
-    <a-camera position="0 0 0" look-controls="enabled: false" wasd-controls="enabled: false"></a-camera>
+    <a-camera
+      position="0 0 0"
+      look-controls="enabled: false"
+      wasd-controls="enabled: false">
+    </a-camera>
 
-    <a-entity id="trackedImage" mindar-image-target="targetIndex: 0">
-      <!-- Skala 7.5: 10 razy większa niż poprzednia skala 0.75. Obrót 180 stopni. -->
+    <!-- Sarna pojawi się po rozpoznaniu wydrukowanego obrazu -->
+    <a-entity mindar-image-target="targetIndex: 0">
+
       <a-gltf-model
-        id="animal"
-        src="#animalModel"
+        id="deer"
+        src="#deerModel"
         position="0 0 0.05"
         rotation="0 180 0"
         scale="7.5 7.5 7.5">
       </a-gltf-model>
 
-      <a-ring
-        position="0 0.005 0.05"
-        rotation="-90 0 0"
-        radius-inner="0.28"
-        radius-outer="0.31"
-        color="#d7e8a6"
-        opacity="0.9">
-      </a-ring>
     </a-entity>
+
   </a-scene>
 
-  <div class="bottom">
-    <span class="status" id="trackingStatus">Gotowe do uruchomienia. Wymagany dostęp do aparatu.</span>
+  <div id="status" class="status">
+    Gotowe. Naciśnij przycisk, aby uruchomić aparat.
   </div>
 
-  <div class="start" id="startScreen">
-    <div class="start-card">
-      <div class="eyebrow">Rozszerzona rzeczywistość</div>
+  <div id="startScreen" class="overlay">
+    <div class="panel">
       <h1>Ożyw leśną scenerię</h1>
-      <p>Po uruchomieniu aparatu skieruj telefon na wydrukowany obraz <strong>lasu i jeziora</strong>. Gdy grafika zostanie rozpoznana, na niej pojawi się model 3D.</p>
-      <p><strong>Wymagane pliki w repozytorium:</strong><br>
-        <code>tlo_las_jezioro.mind</code><br>
-        <code>male_deer_animal_3d_model_free.glb</code>
+      <p>
+        Uruchom aparat i skieruj go na wydrukowany obraz
+        lasu i jeziora. Po rozpoznaniu grafiki pojawi się sarna 3D.
       </p>
-      <button class="primary" id="startBtn" type="button">Uruchom aparat</button>
-      <button class="secondary" id="closeBtn" type="button">Otwórz instrukcję</button>
-      <div id="startStatus">Strona musi działać przez HTTPS, np. GitHub Pages.</div>
-    </div>
-  </div>
 
-  <div class="instructions" id="instructions">
-    <div class="instructions-card">
-      <h2>Jak używać Leśnej AR?</h2>
-      <ol>
-        <li>Wydrukuj plik <code>tlo_las_jezioro.png</code> bez przycinania.</li>
-        <li>Otwórz tę stronę na telefonie i zezwól na dostęp do aparatu.</li>
-        <li>Skieruj kamerę na wydruk, trzymając całą grafikę w kadrze.</li>
-        <li>Po rozpoznaniu obrazu model 3D pojawi się nad planszą.</li>
-      </ol>
-      <p>Jeśli model się nie pojawia, sprawdź, czy plik <code>tlo_las_jezioro.mind</code> został wygenerowany z dokładnie tego samego obrazu i wgrany do repozytorium.</p>
-      <button class="primary" id="backBtn" type="button">Wróć</button>
+      <button id="startButton" type="button">
+        Uruchom aparat
+      </button>
+
+      <p id="message">
+        Wymagane połączenie z internetem i dostęp do aparatu.
+      </p>
     </div>
   </div>
 
   <script>
-    const scene = document.getElementById('arScene');
-    const startScreen = document.getElementById('startScreen');
-    const startStatus = document.getElementById('startStatus');
-    const trackingStatus = document.getElementById('trackingStatus');
-    const instructions = document.getElementById('instructions');
-    const startBtn = document.getElementById('startBtn');
+    (() => {
+      const scene = document.getElementById("arScene");
+      const startScreen = document.getElementById("startScreen");
+      const startButton = document.getElementById("startButton");
+      const status = document.getElementById("status");
+      const message = document.getElementById("message");
 
-    document.getElementById('closeBtn').addEventListener('click', () => {
-      instructions.classList.add('open');
-    });
+      let started = false;
 
-    document.getElementById('helpBtn').addEventListener('click', () => {
-      instructions.classList.add('open');
-    });
+      function showError(text) {
+        message.textContent = text;
+        startButton.disabled = false;
+        startButton.textContent = "Spróbuj ponownie";
+      }
 
-    document.getElementById('backBtn').addEventListener('click', () => {
-      instructions.classList.remove('open');
-    });
+      scene.addEventListener("targetFound", () => {
+        status.textContent = "Rozpoznano obraz! Sarna powinna być widoczna.";
+      });
 
-    scene.addEventListener('targetFound', () => {
-      trackingStatus.textContent = 'Obraz rozpoznany — model 3D jest widoczny.';
-    });
+      scene.addEventListener("targetLost", () => {
+        status.textContent = "Nie widzę planszy. Ustaw cały wydruk w kadrze.";
+      });
 
-    scene.addEventListener('targetLost', () => {
-      trackingStatus.textContent = 'Nie widzę planszy. Skieruj aparat ponownie na cały obraz.';
-    });
+      startButton.addEventListener("click", async () => {
+        if (started) return;
 
-    startBtn.addEventListener('click', async () => {
-      startBtn.disabled = true;
-      startBtn.textContent = 'Uruchamiam…';
-      startStatus.textContent = 'Proszę czekać — uruchamiam kamerę.';
+        startButton.disabled = true;
+        startButton.textContent = "Uruchamiam...";
+        message.textContent = "Sprawdzam system AR...";
 
-      try {
-        if (!window.isSecureContext) {
-          throw new Error('Strona musi być otwarta przez HTTPS.');
-        }
-
-        if (!scene.hasLoaded) {
-          await new Promise((resolve, reject) => {
-            const timeout = setTimeout(() => {
-              reject(new Error('Strona ładuje się zbyt długo. Odśwież ją i spróbuj ponownie.'));
-            }, 15000);
-
-            scene.addEventListener('loaded', () => {
-              clearTimeout(timeout);
-              resolve();
-            }, { once: true });
-          });
-        }
-
-        const arSystem = scene.systems['mindar-image-system'];
-
-        if (!arSystem) {
-          throw new Error('Nie załadował się system AR. Sprawdź internet i odśwież stronę.');
-        }
-
-        await arSystem.start();
-        startScreen.style.display = 'none';
-        trackingStatus.textContent = 'Aparat działa. Szukam wydrukowanego obrazu…';
-
-        setTimeout(() => {
-          const video = document.querySelector('video');
-          if (!video || video.readyState < 2) {
-            trackingStatus.textContent = 'Kamera się uruchamia. Jeśli obraz nadal jest czarny, odśwież stronę i zezwól na aparat.';
+        try {
+          if (!window.isSecureContext) {
+            throw new Error(
+              "Otwórz stronę przez HTTPS, np. GitHub Pages."
+            );
           }
-        }, 2500);
 
-      } catch (err) {
-        startStatus.textContent = err && err.message
-          ? err.message
-          : 'Nie udało się uruchomić aparatu.';
+          if (!window.AFRAME) {
+            throw new Error(
+              "Nie załadował się A-Frame. Sprawdź internet i odśwież stronę."
+            );
+          }
 
-        startBtn.disabled = false;
-        startBtn.textContent = 'Spróbuj ponownie';
-      }
-    });
+          if (!AFRAME.systems["mindar-image"]) {
+            throw new Error(
+              "Nie załadowała się biblioteka MindAR. Sprawdź połączenie z internetem lub spróbuj ponownie później."
+            );
+          }
 
-    window.addEventListener('error', (event) => {
-      if (event.message) {
-        trackingStatus.textContent = 'Błąd: ' + event.message;
-      }
-    });
+          if (!scene.hasLoaded) {
+            await new Promise((resolve, reject) => {
+              const timer = setTimeout(() => {
+                reject(new Error(
+                  "Scena AR ładuje się zbyt długo. Odśwież stronę."
+                ));
+              }, 20000);
+
+              scene.addEventListener("loaded", () => {
+                clearTimeout(timer);
+                resolve();
+              }, { once: true });
+            });
+          }
+
+          const system = scene.systems["mindar-image-system"];
+
+          if (!system) {
+            throw new Error(
+              "System AR nie został uruchomiony. Sprawdź, czy biblioteka MindAR załadowała się poprawnie."
+            );
+          }
+
+          message.textContent = "Uruchamiam aparat...";
+          await system.start();
+
+          started = true;
+          startScreen.classList.add("hidden");
+          status.textContent =
+            "Aparat działa. Skieruj go na wydrukowany obraz lasu i jeziora.";
+
+        } catch (error) {
+          console.error("Błąd uruchamiania AR:", error);
+
+          showError(
+            error && error.message
+              ? error.message
+              : "Nie udało się uruchomić AR."
+          );
+        }
+      });
+    })();
   </script>
+
 </body>
 </html>
